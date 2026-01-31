@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
+# Updated: 2026-01-30 23:14:00
 doctor.py - IntroFlow health check
 Verifies environment is ready for development.
 """
+# Updated: 2026-01-30 23:14:00
 import sys
 from pathlib import Path
 import os
