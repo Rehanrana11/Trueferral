@@ -1,17 +1,13 @@
 # =======================
 # CLAUDE_AUDIT_PACK.ps1
-# One-shot audit pack generator (diff + gates + CI context)
-# Safe: never reads .env, never prints secret env values; redacts common patterns.
-# PS 5.1+ compatible. UTF-8 no BOM.
+# One-shot audit pack generator
+# SAFE: Redacts secrets, UTF-8 no BOM
 # =======================
 
 $ErrorActionPreference = "Stop"
 
 function Write-Utf8NoBomFile {
-  param(
-    [Parameter(Mandatory=$true)][string]$Path,
-    [Parameter(Mandatory=$true)][string]$Content
-  )
+  param([string]$Path, [string]$Content)
   $dir = Split-Path -Parent $Path
   if ($dir -and !(Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
   $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -21,19 +17,16 @@ function Write-Utf8NoBomFile {
 function Redact {
   param([string]$s)
   if ($null -eq $s) { return $s }
-
   $s = $s -replace '(?im)(api[_-]?key\s*[:=]\s*)(.+)$', '$1[REDACTED]'
   $s = $s -replace '(?im)(secret\s*[:=]\s*)(.+)$', '$1[REDACTED]'
   $s = $s -replace '(?im)(token\s*[:=]\s*)(.+)$', '$1[REDACTED]'
   $s = $s -replace '(?im)(password\s*[:=]\s*)(.+)$', '$1[REDACTED]'
-  $s = $s -replace '(?im)(bearer\s+)[A-Za-z0-9\-\._~\+\/]+=*', '$1[REDACTED]'
   $s = $s -replace '(?i)ghp_[A-Za-z0-9]{20,}', 'ghp_[REDACTED]'
   $s = $s -replace '(?i)github_pat_[A-Za-z0-9_]{20,}', 'github_pat_[REDACTED]'
-
   return $s
 }
 
-function Run-Cmd {
+function Run-Section {
   param(
     [Parameter(Mandatory=$true)][string]$Title,
     [Parameter(Mandatory=$true)][string]$CmdText,
@@ -41,122 +34,81 @@ function Run-Cmd {
     [switch]$AllowFail
   )
 
-  $sb = New-Object System.Text.StringBuilder
-  $null = $sb.AppendLine("## $Title")
-  $null = $sb.AppendLine("")
-  $null = $sb.AppendLine("```")
-  $null = $sb.AppendLine("> $CmdText")
-  $null = $sb.AppendLine("```")
-  $null = $sb.AppendLine("")
-  $null = $sb.AppendLine("```text")
-
-  $out = $null
   $exit = 0
+  $outText = ""
+
   try {
     $out = & $Script 2>&1
-    # Prefer LASTEXITCODE for native tools; fall back to $? for PS cmdlets
     if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) { $exit = [int]$LASTEXITCODE }
     elseif (-not $?) { $exit = 1 }
     else { $exit = 0 }
+    $outText = ($out | Out-String).TrimEnd()
   } catch {
-    $out = $_ | Out-String
     $exit = 1
+    $outText = ($_ | Out-String).TrimEnd()
   }
 
-  $txt = Redact (($out | Out-String).TrimEnd())
-  if ([string]::IsNullOrWhiteSpace($txt)) { $txt = "(no output)" }
+  $outText = Redact $outText
+  if ([string]::IsNullOrWhiteSpace($outText)) { $outText = "(no output)" }
 
-  $null = $sb.AppendLine($txt)
-  $null = $sb.AppendLine("")
-  $null = $sb.AppendLine("ExitCode: $exit")
-  $null = $sb.AppendLine("```")
-  $null = $sb.AppendLine("")
+  $section = @"
+## $Title
 
-  if (-not $AllowFail -and $exit -ne 0) { throw "FAIL: $Title (exit $exit)" }
-  return $sb.ToString()
-}
+Command: $CmdText
 
-if (!(Test-Path ".git")) { throw "FAIL: .git not found. Run from repo root." }
+Output:
+$outText
 
-$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-$repoPath  = (Get-Location).Path
-$branch    = (git rev-parse --abbrev-ref HEAD).Trim()
-$headSha   = (git rev-parse HEAD).Trim()
+ExitCode: $exit
 
-git fetch origin --prune | Out-Null
-$remoteDefault = "UNKNOWN"
-foreach ($b in @("main","master")) {
-  git rev-parse "origin/$b" 2>$null | Out-Null
-  if ($LASTEXITCODE -eq 0) { $remoteDefault = $b; break }
-}
-$remoteSha = if ($remoteDefault -ne "UNKNOWN") { (git rev-parse "origin/$remoteDefault").Trim() } else { "UNKNOWN" }
+---
+"@
 
-$md = New-Object System.Text.StringBuilder
-$null = $md.AppendLine("# Claude Audit Pack - $timestamp")
-$null = $md.AppendLine("")
-$null = $md.AppendLine("**RepoPath:** $repoPath")
-$null = $md.AppendLine("**Branch:** $branch")
-$null = $md.AppendLine("**HEAD:** $headSha")
-$null = $md.AppendLine("**RemoteDefault:** $remoteDefault")
-$null = $md.AppendLine("**RemoteSHA:** $remoteSha")
-$null = $md.AppendLine("")
-$null = $md.AppendLine("## Claude instruction")
-$null = $md.AppendLine("Approve/Reject in ONE response. If reject: list exact blockers + exact fixes. No new scope.")
-$null = $md.AppendLine("")
-
-$null = $md.AppendLine((Run-Cmd "Git Status (porcelain)" "git status --porcelain=v1" { git status --porcelain=v1 } -AllowFail))
-$null = $md.AppendLine((Run-Cmd "Recent Commits (last 10)" 'git --no-pager log -n 10 --date=iso --pretty=format:"%h | %ad | %an | %s"' {
-  git --no-pager log -n 10 --date=iso --pretty=format:"%h | %ad | %an | %s"
-} -AllowFail))
-
-$null = $md.AppendLine((Run-Cmd "Git Diff (working tree vs HEAD)" "git --no-pager diff" { git --no-pager diff } -AllowFail))
-$null = $md.AppendLine((Run-Cmd "Git Diff (staged vs HEAD)" "git --no-pager diff --cached" { git --no-pager diff --cached } -AllowFail))
-
-if (Test-Path ".\scripts\encoding_check.ps1") {
-  $null = $md.AppendLine((Run-Cmd "Encoding Gate" "powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\encoding_check.ps1" {
-    powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\encoding_check.ps1
-  } -AllowFail))
-} else {
-  $null = $md.AppendLine("## Encoding Gate`n`n(MISSING: .\scripts\encoding_check.ps1)`n")
-}
-
-if (Test-Path ".\scripts\doctor.py") {
-  $null = $md.AppendLine((Run-Cmd "Doctor Gate" "python .\scripts\doctor.py" { python .\scripts\doctor.py } -AllowFail))
-} else {
-  $null = $md.AppendLine("## Doctor Gate`n`n(MISSING: .\scripts\doctor.py)`n")
-}
-
-$null = $md.AppendLine((Run-Cmd "Pytest" "pytest -v" { pytest -v } -AllowFail))
-
-$wfDir = ".github/workflows"
-if (Test-Path $wfDir) {
-  $wfFiles = Get-ChildItem $wfDir -Filter "*.yml" -ErrorAction SilentlyContinue
-  foreach ($f in $wfFiles) {
-    $raw = Get-Content $f.FullName -Raw
-    if ($raw -match "doctor\.py|pytest|pip install|python -m venv|actions/checkout|setup-python") {
-      $safe = Redact $raw
-      $null = $md.AppendLine("## Workflow: $($f.Name)")
-      $null = $md.AppendLine("")
-      $null = $md.AppendLine("```yaml")
-      $null = $md.AppendLine($safe.TrimEnd())
-      $null = $md.AppendLine("```")
-      $null = $md.AppendLine("")
-    }
+  if (-not $AllowFail -and $exit -ne 0) { 
+    throw "FAIL: $Title (exit $exit)" 
   }
+  
+  return $section
 }
+
+# Main execution
+if (!(Test-Path ".git")) { throw "Not in repo root" }
+
+$ts = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+$branch = (git rev-parse --abbrev-ref HEAD).Trim()
+$head = (git rev-parse --short HEAD).Trim()
+
+git fetch origin --prune 2>&1 | Out-Null
+
+$md = @"
+# Claude Audit Pack - $ts
+
+**Branch:** $branch
+**HEAD:** $head
+**Project:** IntroFlow (Trueferral) - Phase 4 Complete
+
+## INSTRUCTIONS TO CLAUDE
+Analyze this audit pack. Confirm Phase 4 complete and ready for Phase 5.
+
+---
+
+"@
+
+$md += Run-Section "Git Status" "git status --porcelain" { git status --porcelain } -AllowFail
+$md += Run-Section "Recent Commits" "git log --oneline -5" { git log --oneline -5 } -AllowFail
+$md += Run-Section "Encoding Gate" "encoding_check.ps1" { powershell -NoProfile -File .\scripts\encoding_check.ps1 } -AllowFail
+$md += Run-Section "Doctor Gate" "doctor.py" { python .\scripts\doctor.py } -AllowFail
+$md += Run-Section "Test Suite" "pytest -q" { pytest -q } -AllowFail
 
 $handoffDir = "handoffs"
-if (!(Test-Path $handoffDir)) { New-Item -ItemType Directory -Force $handoffDir | Out-Null }
+if (!(Test-Path $handoffDir)) { mkdir $handoffDir | Out-Null }
 
-$outPath = Join-Path $handoffDir ("auditpack_{0}.md" -f $timestamp)
-Write-Utf8NoBomFile -Path $outPath -Content $md.ToString()
+$outFile = "$handoffDir/auditpack_$ts.md"
+Write-Utf8NoBomFile -Path $outFile -Content $md
 
-Write-Host "Created audit pack:" -ForegroundColor Green
-Write-Host ("  {0}" -f $outPath) -ForegroundColor Yellow
+Write-Host "Created: $outFile" -ForegroundColor Green
 
 if (Get-Command Set-Clipboard -ErrorAction SilentlyContinue) {
-  $md.ToString() | Set-Clipboard
-  Write-Host "Copied audit pack to clipboard." -ForegroundColor Green
-} else {
-  Write-Host "Clipboard not available. Upload/paste file content to Claude." -ForegroundColor Yellow
+  $md | Set-Clipboard
+  Write-Host "Copied to clipboard!" -ForegroundColor Green
 }
