@@ -1,4 +1,4 @@
-﻿# WORK_WITH_REMINDER.ps1
+# WORK_WITH_REMINDER.ps1
 # Use this instead of working directly - it reminds you automatically!
 
 param(

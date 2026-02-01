@@ -1,4 +1,4 @@
-﻿$latest = Get-ChildItem handoffs -Filter "*.md" | Sort LastWriteTime -Desc | Select -First 1
+$latest = Get-ChildItem handoffs -Filter "*.md" | Sort LastWriteTime -Desc | Select -First 1
 if ($latest) {
   Write-Host "========================================" -ForegroundColor Cyan
   Write-Host "LATEST HANDOFF: $($latest.Name)" -ForegroundColor Cyan

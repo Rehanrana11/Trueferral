@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "HANDOFF REMINDER CHECK" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
