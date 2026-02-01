@@ -1,7 +1,8 @@
 # =======================
 # CLAUDE_AUDIT_PACK.ps1
-# One-shot “audit pack” generator for Claude (diff + gates + CI context)
-# Safe: never reads .env, never prints secret env values, redacts common patterns.
+# One-shot audit pack generator (diff + gates + CI context)
+# Safe: never reads .env, never prints secret env values; redacts common patterns.
+# PS 5.1+ compatible. UTF-8 no BOM.
 # =======================
 
 $ErrorActionPreference = "Stop"
@@ -17,8 +18,10 @@ function Write-Utf8NoBomFile {
   [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
 }
 
-function Redact($s) {
+function Redact {
+  param([string]$s)
   if ($null -eq $s) { return $s }
+
   $s = $s -replace '(?im)(api[_-]?key\s*[:=]\s*)(.+)$', '$1[REDACTED]'
   $s = $s -replace '(?im)(secret\s*[:=]\s*)(.+)$', '$1[REDACTED]'
   $s = $s -replace '(?im)(token\s*[:=]\s*)(.+)$', '$1[REDACTED]'
@@ -26,31 +29,50 @@ function Redact($s) {
   $s = $s -replace '(?im)(bearer\s+)[A-Za-z0-9\-\._~\+\/]+=*', '$1[REDACTED]'
   $s = $s -replace '(?i)ghp_[A-Za-z0-9]{20,}', 'ghp_[REDACTED]'
   $s = $s -replace '(?i)github_pat_[A-Za-z0-9_]{20,}', 'github_pat_[REDACTED]'
+
   return $s
 }
 
 function Run-Cmd {
-  param([string]$Title, [string]$Cmd, [switch]$AllowFail)
+  param(
+    [Parameter(Mandatory=$true)][string]$Title,
+    [Parameter(Mandatory=$true)][string]$CmdText,
+    [Parameter(Mandatory=$true)][scriptblock]$Script,
+    [switch]$AllowFail
+  )
 
   $sb = New-Object System.Text.StringBuilder
   $null = $sb.AppendLine("## $Title")
   $null = $sb.AppendLine("")
   $null = $sb.AppendLine("```")
-  $null = $sb.AppendLine("> $Cmd")
+  $null = $sb.AppendLine("> $CmdText")
   $null = $sb.AppendLine("```")
   $null = $sb.AppendLine("")
   $null = $sb.AppendLine("```text")
 
-  $out = & powershell -NoProfile -ExecutionPolicy Bypass -Command $Cmd 2>&1
-  $code = $LASTEXITCODE
+  $out = $null
+  $exit = 0
+  try {
+    $out = & $Script 2>&1
+    # Prefer LASTEXITCODE for native tools; fall back to $? for PS cmdlets
+    if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) { $exit = [int]$LASTEXITCODE }
+    elseif (-not $?) { $exit = 1 }
+    else { $exit = 0 }
+  } catch {
+    $out = $_ | Out-String
+    $exit = 1
+  }
+
   $txt = Redact (($out | Out-String).TrimEnd())
+  if ([string]::IsNullOrWhiteSpace($txt)) { $txt = "(no output)" }
+
   $null = $sb.AppendLine($txt)
   $null = $sb.AppendLine("")
-  $null = $sb.AppendLine("ExitCode: $code")
+  $null = $sb.AppendLine("ExitCode: $exit")
   $null = $sb.AppendLine("```")
   $null = $sb.AppendLine("")
 
-  if (-not $AllowFail -and $code -ne 0) { throw "FAIL: $Title (exit $code)" }
+  if (-not $AllowFail -and $exit -ne 0) { throw "FAIL: $Title (exit $exit)" }
   return $sb.ToString()
 }
 
@@ -70,7 +92,7 @@ foreach ($b in @("main","master")) {
 $remoteSha = if ($remoteDefault -ne "UNKNOWN") { (git rev-parse "origin/$remoteDefault").Trim() } else { "UNKNOWN" }
 
 $md = New-Object System.Text.StringBuilder
-$null = $md.AppendLine("# Claude Audit Pack — $timestamp")
+$null = $md.AppendLine("# Claude Audit Pack - $timestamp")
 $null = $md.AppendLine("")
 $null = $md.AppendLine("**RepoPath:** $repoPath")
 $null = $md.AppendLine("**Branch:** $branch")
@@ -82,24 +104,29 @@ $null = $md.AppendLine("## Claude instruction")
 $null = $md.AppendLine("Approve/Reject in ONE response. If reject: list exact blockers + exact fixes. No new scope.")
 $null = $md.AppendLine("")
 
-$null = $md.AppendLine((Run-Cmd "Git Status (porcelain)" 'git status --porcelain=v1' -AllowFail))
-$null = $md.AppendLine((Run-Cmd "Recent Commits (last 10)" 'git --no-pager log -n 10 --date=iso --pretty=format:"%h | %ad | %an | %s"' -AllowFail))
-$null = $md.AppendLine((Run-Cmd "Git Diff (working tree vs HEAD)" 'git --no-pager diff' -AllowFail))
-$null = $md.AppendLine((Run-Cmd "Git Diff (staged vs HEAD)" 'git --no-pager diff --cached' -AllowFail))
+$null = $md.AppendLine((Run-Cmd "Git Status (porcelain)" "git status --porcelain=v1" { git status --porcelain=v1 } -AllowFail))
+$null = $md.AppendLine((Run-Cmd "Recent Commits (last 10)" 'git --no-pager log -n 10 --date=iso --pretty=format:"%h | %ad | %an | %s"' {
+  git --no-pager log -n 10 --date=iso --pretty=format:"%h | %ad | %an | %s"
+} -AllowFail))
+
+$null = $md.AppendLine((Run-Cmd "Git Diff (working tree vs HEAD)" "git --no-pager diff" { git --no-pager diff } -AllowFail))
+$null = $md.AppendLine((Run-Cmd "Git Diff (staged vs HEAD)" "git --no-pager diff --cached" { git --no-pager diff --cached } -AllowFail))
 
 if (Test-Path ".\scripts\encoding_check.ps1") {
-  $null = $md.AppendLine((Run-Cmd "Encoding Gate" 'powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\encoding_check.ps1' -AllowFail))
+  $null = $md.AppendLine((Run-Cmd "Encoding Gate" "powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\encoding_check.ps1" {
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\encoding_check.ps1
+  } -AllowFail))
 } else {
   $null = $md.AppendLine("## Encoding Gate`n`n(MISSING: .\scripts\encoding_check.ps1)`n")
 }
 
 if (Test-Path ".\scripts\doctor.py") {
-  $null = $md.AppendLine((Run-Cmd "Doctor Gate" 'python .\scripts\doctor.py' -AllowFail))
+  $null = $md.AppendLine((Run-Cmd "Doctor Gate" "python .\scripts\doctor.py" { python .\scripts\doctor.py } -AllowFail))
 } else {
   $null = $md.AppendLine("## Doctor Gate`n`n(MISSING: .\scripts\doctor.py)`n")
 }
 
-$null = $md.AppendLine((Run-Cmd "Pytest" 'pytest -v' -AllowFail))
+$null = $md.AppendLine((Run-Cmd "Pytest" "pytest -v" { pytest -v } -AllowFail))
 
 $wfDir = ".github/workflows"
 if (Test-Path $wfDir) {
@@ -120,11 +147,12 @@ if (Test-Path $wfDir) {
 
 $handoffDir = "handoffs"
 if (!(Test-Path $handoffDir)) { New-Item -ItemType Directory -Force $handoffDir | Out-Null }
-$outPath = Join-Path $handoffDir "auditpack_$timestamp.md"
+
+$outPath = Join-Path $handoffDir ("auditpack_{0}.md" -f $timestamp)
 Write-Utf8NoBomFile -Path $outPath -Content $md.ToString()
 
 Write-Host "Created audit pack:" -ForegroundColor Green
-Write-Host "  $outPath" -ForegroundColor Yellow
+Write-Host ("  {0}" -f $outPath) -ForegroundColor Yellow
 
 if (Get-Command Set-Clipboard -ErrorAction SilentlyContinue) {
   $md.ToString() | Set-Clipboard
