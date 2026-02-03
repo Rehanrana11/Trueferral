@@ -135,7 +135,7 @@ def test_unknown_field_rejected_with_422():
 
 def test_counterparty_stripped_deterministically():
     """Whitespace should be stripped from counterparty."""
-    repo = _override_service(subject="user_test")
+    repo = _override_service()
     c = TestClient(app)
     
     r = c.post(
@@ -147,7 +147,7 @@ def test_counterparty_stripped_deterministically():
         body = r.json()
         # Counterparty should be stripped
         assert body["counterparty"] == "Alice", f"Expected 'Alice', got '{body['counterparty']}'"
-        # Note should also be normalized (empty whitespace → None handled by service)
+        # Note should also be normalized (empty whitespace Ã¢â€ â€™ None handled by service)
         # But API might return "hi" after strip
     
     app.dependency_overrides.clear()
@@ -190,7 +190,7 @@ def test_note_max_length_enforced():
 
 def test_empty_note_normalized_to_none():
     """Empty or whitespace-only note should become None."""
-    repo = _override_service(subject="user_test")
+    repo = _override_service()
     c = TestClient(app)
     
     r = c.post(
