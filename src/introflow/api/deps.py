@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
 
+from fastapi import Request
+
 from introflow.domain.contracts import AuthContext
 from introflow.domain.types import EntityId
+from introflow.auth.api import get_auth_context_from_request
 from introflow.service.core_loop import CreateIntroReceiptService, IntroReceipt
 
 
@@ -37,15 +39,9 @@ class _NoopIntroReceiptRepo:
         pass
 
 
-@dataclass(frozen=True, slots=True)
-class _NullAuth:
-    def subject(self) -> Optional[str]:
-        return None
-
-
-def get_auth_context():
-    """Step 47 will replace this with real auth boundary."""
-    return _NullAuth()
+def get_auth_context(request: Request) -> AuthContext:
+    """Step 47: Auth boundary v0 (stub allowed; interface frozen)."""
+    return get_auth_context_from_request(request)
 
 
 def get_intro_receipt_service():
