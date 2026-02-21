@@ -1,0 +1,27 @@
+﻿import os
+path = r"E:\introflow\frontend\src\app\page.tsx"
+print("Writing IntroFlow UI...")
+lines = []
+lines.append('"use client";')
+lines.append('import { useState, useCallback } from "react";')
+lines.append('')
+lines.append('const DS = {')
+lines.append('  colors: {')
+lines.append('    bg: "#0A0A0B", surface: "#111113", surfaceHover: "#18181B",')
+lines.append('    surfaceActive: "#1F1F23", border: "#27272A", borderSubtle: "#1C1C1F",')
+lines.append('    text: "#FAFAFA", textSecondary: "#A1A1AA", textTertiary: "#71717A",')
+lines.append('    accent: "#10B981", accentDim: "rgba(16,185,129,0.12)",')
+lines.append('    accentGlow: "rgba(16,185,129,0.25)",')
+lines.append('    warning: "#F59E0B", warningDim: "rgba(245,158,11,0.12)",')
+lines.append('    danger: "#EF4444", dangerDim: "rgba(239,68,68,0.12)",')
+lines.append('    info: "#3B82F6", infoDim: "rgba(59,130,246,0.12)",')
+lines.append('    purple: "#8B5CF6", purpleDim: "rgba(139,92,246,0.12)",')
+lines.append('  },')
+lines.append("  font: { sans: \"'DM Sans', -apple-system, sans-serif\", mono: \"'JetBrains Mono', monospace\" },")
+lines.append('  radius: { sm: "6px", md: "10px", lg: "14px", xl: "20px", full: "9999px" },')
+lines.append('  shadow: { sm: "0 1px 2px rgba(0,0,0,0.3)", md: "0 4px 12px rgba(0,0,0,0.4)", lg: "0 8px 32px rgba(0,0,0,0.5)", glow: "0 0 24px rgba(16,185,129,0.15)" },')
+lines.append('  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",')
+lines.append('};')
+with open(path, "w", encoding="utf-8") as f:
+    f.write("\n".join(lines))
+print(f"Part 1 written: {os.path.getsize(path)} bytes")

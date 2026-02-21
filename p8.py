@@ -1,0 +1,7 @@
+﻿f = open(r"E:\introflow\frontend\src\app\page.tsx", "a", encoding="utf-8")
+f.write('<div style={{width:"220px",minHeight:"100vh",background:C.sf,borderRight:1px solid ,display:"flex",flexDirection:"column",flexShrink:0}}>\n')
+f.write('<div style={{padding:"24px 20px",borderBottom:1px solid }}><div style={{display:"flex",alignItems:"center",gap:"10px"}}><div style={{width:"32px",height:"32px",borderRadius:R.md,background:linear-gradient(135deg,,),display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px",fontWeight:800,color:"#000"}}>IF</div><div><div style={{fontSize:"15px",fontWeight:700}}>IntroFlow</div><div style={{fontSize:"11px",color:C.t3,fontFamily:F.mono}}>Trust Engine v1</div></div></div></div>\n')
+f.write('<nav style={{padding:"12px 8px",flex:1}}>{items.map(it=><button key={it.id} onClick={()=>nav(it.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:"10px",padding:"10px 14px",marginBottom:"2px",background:view===it.id?C.sfa:"transparent",border:view===it.id?1px solid :"1px solid transparent",borderRadius:R.md,cursor:"pointer",color:view===it.id?C.tx:C.t2,fontFamily:F.sans,fontSize:"13px",fontWeight:500,textAlign:"left"}}><span style={{fontSize:"16px",width:"20px",textAlign:"center",opacity:view===it.id?1:0.6}}>{it.icon}</span>{it.label}</button>)}</nav>\n')
+f.write('<div style={{padding:"16px 20px",borderTop:1px solid ,fontSize:"11px",color:C.t3,fontFamily:F.mono}}>RC_1.0_0</div></div>\n\n')
+f.close()
+print("Part 8 OK")
