@@ -1,10 +1,4 @@
-\"\"\"empty baseline
 
-Revision ID: 0001
-Revises:
-Create Date: 2026-02-01 07:29:01
-
-\"\"\"
 from __future__ import annotations
 
 from alembic import op
