@@ -51,7 +51,7 @@ def run_migrations_online() -> None:
 
     engine = create_engine_from_settings(pool_pre_ping=True)
 
-    with engine.connect() as connection:  # type: Connection
+    with engine.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
