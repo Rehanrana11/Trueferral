@@ -1,6 +1,0 @@
-﻿f = open(r"E:\introflow\frontend\src\app\page.tsx", "a", encoding="utf-8")
-f.write('function Badge({state}:{state:string}){const s=STATES[state]||{label:state,color:C.t3,bg:"rgba(113,113,122,0.12)",icon:"?"};return <span style={{display:"inline-flex",alignItems:"center",gap:"5px",padding:"4px 10px",borderRadius:R.full,background:s.bg,color:s.color,fontSize:"12px",fontWeight:600,border:1px solid 22}}><span style={{fontSize:"11px"}}>{s.icon}</span>{s.label}</span>;}\n\n')
-f.write('function Btn({children,primary,disabled,onClick,style:x}:{children:React.ReactNode;primary?:boolean;disabled?:boolean;onClick?:()=>void;style?:React.CSSProperties}){return <button onClick={onClick} disabled={disabled} style={{display:"inline-flex",alignItems:"center",gap:"6px",padding:"10px 20px",borderRadius:R.md,border:"none",fontFamily:F.sans,fontWeight:600,fontSize:"14px",cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.4:1,background:primary?C.ac:C.sfa,color:primary?"#000":C.tx,...x}}>{children}</button>;}\n\n')
-f.write('function Card({children,style:x}:{children:React.ReactNode;style?:React.CSSProperties}){return <div style={{background:C.sf,border:1px solid ,borderRadius:R.lg,padding:"24px",...x}}>{children}</div>;}\n\n')
-f.close()
-print("Part 4 OK")

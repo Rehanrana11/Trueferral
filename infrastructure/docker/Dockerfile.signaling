@@ -1,0 +1,43 @@
+# ─── Stage 1: Build ──────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy dependency manifests first (cache layer)
+COPY package*.json ./
+RUN npm ci --only=production=false
+
+# Copy source and compile TypeScript
+COPY tsconfig.json ./
+COPY src/ ./src/
+RUN npm run build
+
+# Prune dev dependencies
+RUN npm prune --production
+
+# ─── Stage 2: Production Image ───────────────────────────────────────────────
+FROM node:20-alpine AS production
+
+# Security: run as non-root user
+RUN addgroup -g 1001 -S trueferral && \
+    adduser -S trueferral -u 1001 -G trueferral
+
+WORKDIR /app
+
+# Copy only production artifacts
+COPY --from=builder --chown=trueferral:trueferral /app/dist ./dist
+COPY --from=builder --chown=trueferral:trueferral /app/node_modules ./node_modules
+COPY --from=builder --chown=trueferral:trueferral /app/package.json ./
+
+# Create logs directory
+RUN mkdir -p logs && chown trueferral:trueferral logs
+
+USER trueferral
+
+# Health check via HTTP
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://localhost:${PORT:-8443}/health || exit 1
+
+EXPOSE 8443
+
+CMD ["node", "dist/server.js"]

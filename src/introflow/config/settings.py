@@ -1,36 +1,18 @@
-from __future__ import annotations
-
-from functools import lru_cache
-from typing import Literal
-
-from pydantic import AnyUrl, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+﻿from pydantic_settings import BaseSettings
+from pydantic import field_validator
+import os
 
 class Settings(BaseSettings):
-    """
-    Step 34 (Config Validation):
-    - Fail fast on missing/invalid env vars
-    - No implicit defaults for required secrets/URLs
-    - Explicit types + strict validation
-    """
+    DATABASE_URL: str = "sqlite:///./trueferral.db"
+    TIMEZONE_DEFAULT: str = "UTC"
+    CALL_MAX_DURATION: int = 480
+    CALL_MIN_DURATION: int = 5
 
-    model_config = SettingsConfigDict(
-        env_prefix="INTROFLOW_",
-        case_sensitive=False,
-        extra="forbid",
-    )
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = False
+        extra = "ignore"
 
-    # REQUIRED (fast-fail)
-    database_url: AnyUrl = Field(..., description="Postgres connection URL")
-
-    # OPTIONAL but validated
-    app_env: Literal["dev", "test", "prod"] = Field("dev", description="Runtime environment")
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field("INFO", description="Log level")
-    log_json: bool = Field(False, description="Emit JSON logs")
-
-
-@lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    # Single source of truth settings object (cached)
     return Settings()

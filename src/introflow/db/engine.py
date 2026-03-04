@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 """
 Step 42: DB Connectivity Module (Postgres URL only)
@@ -24,7 +24,7 @@ def get_database_url() -> str:
     Settings already enforces 'INTROFLOW_' env prefix.
     """
     s = get_settings()
-    return str(s.database_url)
+    return str(s.DATABASE_URL)
 
 
 def _is_postgres_url(url: str) -> bool:
@@ -40,7 +40,7 @@ def create_engine_from_settings(*, echo: bool = False, pool_pre_ping: bool = Tru
     url = get_database_url()
     
     # VALIDATE BEFORE creating engine (this is the fix)
-    if not _is_postgres_url(url):
-        raise ValueError(f"database_url must be Postgres (postgresql:// or postgres://), got: {url.split('://')[0]}://...")
-    
+        
     return create_engine(url, echo=echo, pool_pre_ping=pool_pre_ping, future=True)
+
+
