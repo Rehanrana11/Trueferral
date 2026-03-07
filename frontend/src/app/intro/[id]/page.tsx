@@ -565,6 +565,8 @@ interface FormData {
   counterparty: string;
   targetEmail: string;
   note: string;
+  why_met: string;
+  what_discussed: string;
 }
 
 interface FormErrors {
@@ -614,7 +616,7 @@ export default function IntroRoomPage({ params }: PageProps) {
   const { id } = use(params);
 
   const [uiState, setUiState] = useState<UIState>("form");
-  const [form, setForm] = useState<FormData>({ counterparty: "", targetEmail: "", note: "" });
+  const [form, setForm] = useState<FormData>({ counterparty: "", targetEmail: "", note: "", why_met: "", what_discussed: "" });
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errorMsg, setErrorMsg] = useState("");
@@ -687,7 +689,7 @@ export default function IntroRoomPage({ params }: PageProps) {
   }
 
   function handleNewIntro() {
-    setForm({ counterparty: "", targetEmail: "", note: "" });
+    setForm({ counterparty: "", targetEmail: "", note: "", why_met: "", what_discussed: "" });
     setErrors({});
     setTouched({});
     setReceipt(null);
@@ -793,7 +795,43 @@ export default function IntroRoomPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                {/* Trust guarantee */}
+
+                {/* Why you met */}
+                <div className="field-group">
+                  <div className="field-label">
+                    Why you met
+                    <span className="field-optional">Optional</span>
+                  </div>
+                  <input
+                    className="field-input"
+                    type="text"
+                    placeholder="e.g. Met at SaaStr 2025, worked together at Stripe"
+                    value={form.why_met}
+                    onChange={e => handleChange("why_met", e.target.value)}
+                    disabled={isSubmitting}
+                    maxLength={200}
+                  />
+                  <div className="field-hint">Seeds the intro with relationship context</div>
+                </div>
+
+                {/* What was discussed */}
+                <div className="field-group">
+                  <div className="field-label">
+                    What was discussed
+                    <span className="field-optional">Optional</span>
+                  </div>
+                  <textarea
+                    className="field-textarea"
+                    placeholder="Key topics, shared interests, or specific ask that came up"
+                    value={form.what_discussed}
+                    onChange={e => handleChange("what_discussed", e.target.value)}
+                    disabled={isSubmitting}
+                    maxLength={500}
+                    style={{ minHeight: 72 }}
+                  />
+                </div>
+
+                                {/* Trust guarantee */}
                 <div className="trust-block">
                   <div className="trust-row">
                     <div className="trust-dot" />
