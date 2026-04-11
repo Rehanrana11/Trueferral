@@ -1,0 +1,23 @@
+﻿services:
+  - type: web
+    name: trueferral-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && pip install -e .
+    startCommand: uvicorn introflow.main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: INTROFLOW_DATABASE_URL
+        fromDatabase:
+          name: trueferral-db
+          property: connectionString
+      - key: INTROFLOW_APP_ENV
+        value: production
+      - key: INTROFLOW_LOG_JSON
+        value: "true"
+      - key: INTROFLOW_SECRET_KEY
+        generateValue: true
+    pythonVersion: "3.11"
+
+databases:
+  - name: trueferral-db
+    databaseName: trueferral
+    user: trueferral

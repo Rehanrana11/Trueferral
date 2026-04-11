@@ -1,0 +1,35 @@
+# Step 1 Requirements
+# Video Call Backend - Database & API Layer
+# Install with: pip install -r requirements-step1.txt
+
+# Core Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Database & ORM
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+psycopg2-binary>=2.9.0  # PostgreSQL adapter
+pymysql>=1.1.0  # MySQL adapter (optional)
+
+# Data Validation
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Timezone Support
+pytz>=2023.3
+python-dateutil>=2.8.2
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.25.0  # For testing async endpoints
+
+# Development
+black>=23.0.0  # Code formatting
+flake8>=6.1.0  # Linting
+mypy>=1.7.0  # Type checking
+python-dotenv>=1.0.0  # Environment variables
+
+# Optional but Recommended
+SQLAlchemy-Utils>=0.41.0  # Useful SQLAlchemy extensions
