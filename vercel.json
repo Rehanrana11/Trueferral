@@ -1,20 +1,4 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "src/introflow/app.py",   
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/introflow/app.py"
-    }
-  ],
-  "functions": {
-    "src/introflow/app.py": {
-      "maxDuration": 300
-    }
-  }
+﻿{
+  "framework": "nextjs",
+  "rootDirectory": "frontend"
 }
