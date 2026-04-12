@@ -452,7 +452,7 @@ function getMockData(id: string): { meta: SnapshotMeta; events: TLEvent[] } {
       final_state: "SUCCESS",
       event_count: 13,
     },
-    events: [
+    events: ([] as TLEvent[]).concat([
       {
         seq: 1,
         event_type: "SnapshotCreated",
@@ -570,7 +570,7 @@ function getMockData(id: string): { meta: SnapshotMeta; events: TLEvent[] } {
         timestamp: t(14450),
         hash: "a3b4c5d6e7f8a3b4",
       },
-    ].sort((a, b) => a.seq - b.seq),
+    ]).sort((a, b) => a.seq - b.seq),
   };
 }
 

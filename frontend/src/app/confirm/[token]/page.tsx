@@ -762,7 +762,7 @@ export default function ConfirmPage({ params }: PageProps) {
                 </div>
 
                 <p className="consent-note" style={{ marginTop: 14 }}>
-                  <IconShield size={13} color={COLORS.muted} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                  <span style={{ verticalAlign: "middle", marginRight: 4, display: "inline-flex" }}><IconShield size={13} color={COLORS.muted} /></span>
                   This record is immutable and tamper-evident.
                 </p>
               </>

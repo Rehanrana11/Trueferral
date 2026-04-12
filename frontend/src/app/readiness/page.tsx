@@ -432,7 +432,7 @@ const FIELDS: CheckField[] = [
   { id: "mutual_benefit",    label: "Mutual benefit",            weight: 10, type: "textarea", placeholder: "What does each side get?",        section: "context" },
   // Terms — commitment signals
   { id: "success_condition", label: "Success condition",         weight: 10, type: "text",     placeholder: "e.g. Candidate hired and retained 90 days", section: "terms" },
-  { id: "timeline",          label: "Expected timeline",         weight: 5,  type: "check",    label: "I've set a realistic timeline expectation", section: "terms" },
+  { id: "timeline",          label: "I've set a realistic timeline expectation", weight: 5,  type: "check",    section: "terms" },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
