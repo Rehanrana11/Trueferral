@@ -582,7 +582,7 @@ export default function ConfirmPage({ params }: PageProps) {
     setUiState("loading");
     try {
       const now = new Date().toISOString();
-      const res = await fetch("/v1/confirm/intro", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/confirm/intro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, confirm: true, confirmed_at: now }),

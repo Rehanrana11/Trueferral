@@ -649,9 +649,9 @@ export default function IntroRoomPage({ params }: PageProps) {
     setUiState("submitting");
 
     try {
-      const res = await fetch("/v1/intro-receipts", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/intro-receipts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-IntroFlow-Subject": "demo-user" },
         body: JSON.stringify({
           counterparty: form.counterparty.trim(),
           note: form.note.trim() || null,

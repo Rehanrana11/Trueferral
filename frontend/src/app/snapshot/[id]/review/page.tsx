@@ -565,7 +565,7 @@ export default function RiskLockPreviewPage({ params }: PageProps) {
   async function handleLock() {
     setUiState("locking");
     try {
-      const res = await fetch(`/v1/snapshots/${id}/freeze`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/snapshots/${id}/freeze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from introflow.health import health_payload
 from introflow.version import __version__
@@ -16,6 +17,19 @@ app = FastAPI(
     title="IntroFlow / Trueferral",
     version=__version__,
     description="Trust-based professional introduction platform.",
+)
+
+# CORS - allow frontend to call backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://trueferral-sage.vercel.app",
+        "https://trueferral.vercel.app",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.add_middleware(ObservabilityMiddleware)
