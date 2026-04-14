@@ -1,3 +1,33 @@
+# =============================================================================
+# Build-Full-Frontend.ps1
+# Replaces dashboard page.jsx with full real backend-connected version
+# Adds complete Video Calls frontend page
+# =============================================================================
+
+$Root = "C:\Users\devel\OneDrive\Documents\Software\Trueferral-main"
+$ErrorActionPreference = "Stop"
+
+function Write-UTF8 {
+    param([string]$Path, [string]$Content)
+    $dir = Split-Path $Path -Parent
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "  [WRITTEN] $($Path.Replace($Root,''))" -ForegroundColor Green
+}
+
+Set-Location $Root
+Write-Host ""
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "  Building Full Frontend + Video Calls Page" -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# =============================================================================
+# STEP 1: Complete page.jsx - Real login + Real dashboard + Real referrals
+# =============================================================================
+Write-Host "STEP 1: Building complete page.jsx with real backend" -ForegroundColor White
+
+Write-UTF8 "$Root\frontend\src\app\page.jsx" @'
 "use client";
 import { useState, useEffect, useCallback } from "react";
 
@@ -164,7 +194,7 @@ const Icon = ({ name, size = 16 }) => {
   );
 };
 
-// â”€â”€â”€ LOGIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
 function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
@@ -196,7 +226,7 @@ function LoginPage({ onLogin }) {
       } else {
         setError(data.detail || "Something went wrong. Please try again.");
       }
-    } catch { setError("Network error â€” is the backend running?"); }
+    } catch { setError("Network error — is the backend running?"); }
     finally { setLoading(false); }
   }
 
@@ -231,7 +261,7 @@ function LoginPage({ onLogin }) {
         </div>
         <div className="form-group">
           <label className="form-label">Password</label>
-          <input className="form-input" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAuth()} />
+          <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAuth()} />
         </div>
         {tab === "signup" && (
           <div className="form-group">
@@ -247,7 +277,7 @@ function LoginPage({ onLogin }) {
   );
 }
 
-// â”€â”€â”€ DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ user }) {
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
@@ -271,10 +301,10 @@ function Dashboard({ user }) {
     { label: "Conversions", value: stats.conversions?.toLocaleString() || "0", change: "Live data", up: true, color: "#9b5de5" },
     { label: "Revenue Attributed", value: `$${((stats.revenue_attributed || 0) / 1000).toFixed(1)}K`, change: "Live data", up: true, color: COLORS.yellow },
   ] : [
-    { label: "Total Referrals", value: "â€”", change: "Loading...", up: true, color: COLORS.accent },
-    { label: "Active Referrers", value: "â€”", change: "Loading...", up: true, color: COLORS.green },
-    { label: "Conversions", value: "â€”", change: "Loading...", up: true, color: "#9b5de5" },
-    { label: "Revenue Attributed", value: "â€”", change: "Loading...", up: true, color: COLORS.yellow },
+    { label: "Total Referrals", value: "—", change: "Loading...", up: true, color: COLORS.accent },
+    { label: "Active Referrers", value: "—", change: "Loading...", up: true, color: COLORS.green },
+    { label: "Conversions", value: "—", change: "Loading...", up: true, color: "#9b5de5" },
+    { label: "Revenue Attributed", value: "—", change: "Loading...", up: true, color: COLORS.yellow },
   ];
 
   const funnel = stats ? [
@@ -331,9 +361,9 @@ function Dashboard({ user }) {
             </div>
           )) : (
             <div style={{ textAlign: "center", padding: "20px 0" }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>ðŸ¤</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>🤝</div>
               <div style={{ color: COLORS.muted, fontSize: 13 }}>No introductions yet.</div>
-              <a href="/intro/new" style={{ color: COLORS.accent, fontSize: 13, marginTop: 8, display: "block" }}>Make your first introduction â†’</a>
+              <a href="/intro/new" style={{ color: COLORS.accent, fontSize: 13, marginTop: 8, display: "block" }}>Make your first introduction →</a>
             </div>
           )}
         </div>
@@ -382,7 +412,7 @@ function Dashboard({ user }) {
   );
 }
 
-// â”€â”€â”€ REFERRALS TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── REFERRALS TABLE ──────────────────────────────────────────────────────────
 function ReferralsTable({ user }) {
   const [intros, setIntros] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -424,7 +454,7 @@ function ReferralsTable({ user }) {
         {loading ? <div style={{ textAlign: "center", padding: 40, color: COLORS.muted }}>Loading your introductions...</div>
         : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 24px" }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>ðŸ¤</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🤝</div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No introductions yet</div>
             <div style={{ color: COLORS.muted, fontSize: 13, marginBottom: 20 }}>Start building your verified referral record</div>
             <a href="/intro/new" className="btn btn-primary" style={{ textDecoration: "none" }}><Icon name="plus" size={14} /> Make First Introduction</a>
@@ -438,7 +468,7 @@ function ReferralsTable({ user }) {
                   <td><div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div className="avatar" style={{ width: 26, height: 26, fontSize: 10 }}>{r.counterparty[0]}</div>{r.counterparty}
                   </div></td>
-                  <td style={{ color: COLORS.muted, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.note || "â€”"}</td>
+                  <td style={{ color: COLORS.muted, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.note || "—"}</td>
                   <td className="mono">{new Date(r.created_at).toLocaleDateString()}</td>
                   <td>{statusBadge(r.state)}</td>
                   <td>
@@ -457,7 +487,7 @@ function ReferralsTable({ user }) {
   );
 }
 
-// â”€â”€â”€ VIDEO CALLS PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── VIDEO CALLS PAGE ─────────────────────────────────────────────────────────
 function VideoCalls({ user }) {
   const [tab, setTab] = useState("upcoming");
   const [upcoming, setUpcoming] = useState([]);
@@ -642,7 +672,7 @@ function VideoCalls({ user }) {
               <label className="form-label">Rating</label>
               <div className="rating-stars">
                 {[1,2,3,4,5].map(s => (
-                  <span key={s} className="star" onClick={() => setRating({...rating, rating: s})} style={{ color: s <= rating.rating ? COLORS.yellow : COLORS.border }}>â˜…</span>
+                  <span key={s} className="star" onClick={() => setRating({...rating, rating: s})} style={{ color: s <= rating.rating ? COLORS.yellow : COLORS.border }}>★</span>
                 ))}
               </div>
             </div>
@@ -693,7 +723,7 @@ function VideoCalls({ user }) {
           <div className="availability-slot" key={i}>
             <div>
               <span style={{ fontWeight: 600, fontSize: 13 }}>{days[slot.day_of_week]}</span>
-              <span style={{ color: COLORS.muted, fontSize: 12, marginLeft: 12, fontFamily: "DM Mono, monospace" }}>{slot.start_time} â€“ {slot.end_time}</span>
+              <span style={{ color: COLORS.muted, fontSize: 12, marginLeft: 12, fontFamily: "DM Mono, monospace" }}>{slot.start_time} – {slot.end_time}</span>
               <span style={{ color: COLORS.muted, fontSize: 11, marginLeft: 8 }}>{slot.timezone}</span>
             </div>
             <button onClick={() => deleteAvailability(slot.id)} style={{ background: "transparent", border: "none", color: COLORS.red, cursor: "pointer", fontSize: 12 }}>Remove</button>
@@ -714,7 +744,7 @@ function VideoCalls({ user }) {
         {loading ? <div style={{ textAlign: "center", padding: 40, color: COLORS.muted }}>Loading calls...</div>
         : (tab === "upcoming" ? upcoming : history).length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 24px" }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>{tab === "upcoming" ? "ðŸ“…" : "ðŸ“ž"}</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>{tab === "upcoming" ? "📅" : "📞"}</div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>{tab === "upcoming" ? "No upcoming calls" : "No call history"}</div>
             <div style={{ color: COLORS.muted, fontSize: 13 }}>
               {tab === "upcoming" ? "Schedule a call to get started." : "Completed calls will appear here."}
@@ -761,7 +791,7 @@ function VideoCalls({ user }) {
   );
 }
 
-// â”€â”€â”€ SETTINGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function Settings({ user }) {
   const [activeTab, setActiveTab] = useState("profile");
   const [form, setForm] = useState({ full_name: user?.full_name || "", company: user?.company || "", email: user?.email || "" });
@@ -832,7 +862,7 @@ function Settings({ user }) {
   );
 }
 
-// â”€â”€â”€ APP SHELL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── APP SHELL ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
@@ -908,7 +938,7 @@ export default function App() {
           {page === "analytics" && (
             <div className="content" style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, minHeight: 400 }}>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>ðŸš§</div>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🚧</div>
                 <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Analytics Coming Soon</div>
                 <div style={{ color: COLORS.muted, fontSize: 13 }}>Advanced analytics dashboard in development</div>
               </div>
@@ -919,3 +949,38 @@ export default function App() {
     </>
   );
 }
+'@
+
+Write-Host ""
+Write-Host "STEP 2: Commit and push" -ForegroundColor White
+
+Set-Location $Root
+git add -A
+git commit -m "feat: complete real dashboard + full video calls frontend page"
+git push origin main
+
+Write-Host ""
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "  Done! Now build and deploy frontend" -ForegroundColor Green
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Run next:" -ForegroundColor Yellow
+Write-Host "  cd frontend" -ForegroundColor Yellow
+Write-Host "  npm run build" -ForegroundColor Yellow
+Write-Host "  vercel --prod" -ForegroundColor Yellow
+Write-Host "  (Link to existing project: yes -> trueferral)" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "What is now REAL (connected to backend):" -ForegroundColor White
+Write-Host "  Login / Signup  -> Real JWT auth, stored in DB" -ForegroundColor Gray
+Write-Host "  Dashboard       -> Real stats from your DB" -ForegroundColor Gray
+Write-Host "  Referrals tab   -> Your actual introductions from DB" -ForegroundColor Gray
+Write-Host "  Video Calls tab -> Full CRUD (schedule/cancel/complete/rate)" -ForegroundColor Gray
+Write-Host "  Settings        -> Shows your real profile + links" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Video Calls features:" -ForegroundColor White
+Write-Host "  - Set availability slots (day/time/timezone)" -ForegroundColor Gray
+Write-Host "  - Schedule calls with other users" -ForegroundColor Gray
+Write-Host "  - View upcoming + history tabs" -ForegroundColor Gray
+Write-Host "  - Start / Complete / Cancel calls" -ForegroundColor Gray
+Write-Host "  - Rate completed calls (1-5 stars + feedback)" -ForegroundColor Gray
+Write-Host ""

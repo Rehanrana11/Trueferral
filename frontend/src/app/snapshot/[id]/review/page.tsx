@@ -562,12 +562,14 @@ export default function RiskLockPreviewPage({ params }: PageProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [lockedAt, setLockedAt] = useState("");
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
   async function handleLock() {
     setUiState("locking");
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/snapshots/${id}/freeze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { "X-IntroFlow-Subject": token, "Authorization": `Bearer ${token}` } : { "X-IntroFlow-Subject": "demo-user" }) },
+        headers: { "Content-Type": "application/json", ...(token ? { "X-IntroFlow-Subject": token, "Authorization": `Bearer ${token}` } : { "X-IntroFlow-Subject": "demo-user" }) }
       });
       if (res.ok) {
         setLockedAt(new Date().toISOString());
