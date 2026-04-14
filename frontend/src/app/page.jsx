@@ -335,6 +335,40 @@ function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [company, setCompany] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const API = process.env.NEXT_PUBLIC_API_URL || "https://trueferral.onrender.com";
+
+  async function handleAuth() {
+    setError("");
+    setLoading(true);
+    try {
+      const endpoint = tab === "login" ? "/auth/login" : "/auth/register";
+      const body = tab === "login"
+        ? { email, password }
+        : { email, password, username, full_name: "", company };
+      const res = await fetch(`${API}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        localStorage.setItem("tf_token", data.token);
+        localStorage.setItem("tf_user", JSON.stringify(data.user));
+        onLogin(data.user);
+      } else {
+        setError(data.detail || "Something went wrong. Please try again.");
+      }
+    } catch (e) {
+      setError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="login-page">
@@ -373,14 +407,21 @@ function LoginPage({ onLogin }) {
         </div>
 
         {tab === "signup" && (
-          <div className="form-group">
-            <label className="form-label">Company Name</label>
-            <input className="form-input" type="text" placeholder="Acme Corp" />
-          </div>
+          <>
+            <div className="form-group">
+              <label className="form-label">Username</label>
+              <input className="form-input" type="text" placeholder="johndoe" value={username} onChange={e => setUsername(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Company Name</label>
+              <input className="form-input" type="text" placeholder="Acme Corp" value={company} onChange={e => setCompany(e.target.value)} />
+            </div>
+          </>
         )}
 
-        <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", padding: "11px", fontSize: 14, marginTop: 4 }} onClick={onLogin}>
-          {tab === "login" ? "Sign In to Dashboard" : "Create Account"}
+        {error && <div style={{ color: COLORS.red, fontSize: 13, marginBottom: 10, padding: "8px 12px", background: "#ff4d6a15", borderRadius: 6, border: "1px solid #ff4d6a33" }}>{error}</div>}
+        <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", padding: "11px", fontSize: 14, marginTop: 4 }} onClick={handleAuth} disabled={loading}>
+          {loading ? "Please wait..." : tab === "login" ? "Sign In to Dashboard" : "Create Account"}
           <Icon name="arrow_down" size={14} />
         </button>
 
@@ -873,13 +914,23 @@ function Settings() {
 
 // ─── APP SHELL ────────────────────────────────────────────
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
 
-  if (!loggedIn) return (
+  function handleLogin(userData) {
+    setUser(userData);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("tf_token");
+    localStorage.removeItem("tf_user");
+    setUser(null);
+  }
+
+  if (!user) return (
     <>
       <style>{styles}</style>
-      <LoginPage onLogin={() => setLoggedIn(true)} />
+      <LoginPage onLogin={handleLogin} />
     </>
   );
 
@@ -919,12 +970,12 @@ export default function App() {
 
           <div className="sidebar-footer">
             <div className="user-pill">
-              <div className="avatar">MT</div>
+              <div className="avatar">{(user?.username || "U")[0].toUpperCase()}</div>
               <div>
                 <div className="user-name">Mike Thompson</div>
                 <div className="user-role">Admin · Pro</div>
               </div>
-              <div style={{ marginLeft: "auto", color: COLORS.muted, cursor: "pointer" }} onClick={() => setLoggedIn(false)}>
+              <div style={{ marginLeft: "auto", color: COLORS.muted, cursor: "pointer" }} onClick={handleLogout}>
                 <Icon name="logout" size={14} />
               </div>
             </div>

@@ -567,7 +567,7 @@ export default function RiskLockPreviewPage({ params }: PageProps) {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/snapshots/${id}/freeze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { "X-IntroFlow-Subject": token, "Authorization": `Bearer ${token}` } : { "X-IntroFlow-Subject": "demo-user" }) },
       });
       if (res.ok) {
         setLockedAt(new Date().toISOString());

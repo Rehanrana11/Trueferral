@@ -1,17 +1,12 @@
 from __future__ import annotations
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from introflow.health import health_payload
 from introflow.version import __version__
 from introflow.api.routes import router as v1_router
 from introflow.observability.middleware import ObservabilityMiddleware
-from introflow.routes.video_calls import (
-    availability_router,
-    rating_router,
-    router as video_router,
-)
+from introflow.routes.video_calls import availability_router, rating_router, router as video_router
+from introflow.routes.auth import router as auth_router
 
 app = FastAPI(
     title="IntroFlow / Trueferral",
@@ -19,13 +14,14 @@ app = FastAPI(
     description="Trust-based professional introduction platform.",
 )
 
-# CORS - allow frontend to call backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://trueferral-sage.vercel.app",
         "https://trueferral.vercel.app",
+        "https://trueferral-app.vercel.app",
         "http://localhost:3000",
+        "http://localhost:3001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,12 +29,11 @@ app.add_middleware(
 )
 
 app.add_middleware(ObservabilityMiddleware)
-
+app.include_router(auth_router)
 app.include_router(v1_router)
 app.include_router(video_router)
 app.include_router(availability_router)
 app.include_router(rating_router)
-
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:
